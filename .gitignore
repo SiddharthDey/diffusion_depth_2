@@ -1,0 +1,7 @@
+data
+logs
+models
+src
+*.egg-info
+*.pyc
+*__pycache__

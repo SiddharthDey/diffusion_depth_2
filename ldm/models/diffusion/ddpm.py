@@ -654,6 +654,7 @@ class LatentDiffusion(DDPM):
     def get_input(self, batch, k, return_first_stage_outputs=False, force_c_encode=False,
                   cond_key=None, return_original_cond=False, bs=None):
         x = super().get_input(batch, k)
+        # print(f"x shape %%%%%%%%%%%%%%%%%%%%%%% {x.shape}")
         if bs is not None:
             x = x[:bs]
         x = x.to(self.device)
@@ -1260,6 +1261,7 @@ class LatentDiffusion(DDPM):
                                            force_c_encode=True,
                                            return_original_cond=True,
                                            bs=N)
+        # print(f"x.shape ------------------------- {x.shape}")
         N = min(x.shape[0], N)
         n_row = min(x.shape[0], n_row)
         log["inputs"] = x
