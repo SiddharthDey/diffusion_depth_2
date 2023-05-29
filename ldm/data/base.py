@@ -51,9 +51,9 @@ class ImagePaths(Dataset):
         self.rgb_labels = dict() if labels is None else labels
         self.depth_labels = dict() if labels is None else labels
 
-
-        rgb_paths = paths[0]
-        depth_paths = paths[1]
+        self.data_dir = "/root/data/nyu_data/"
+        rgb_paths = self.data_dir + paths[0]
+        depth_paths = self.data_dir + paths[1]
 
         # rgb_paths = paths
 
