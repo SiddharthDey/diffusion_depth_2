@@ -162,24 +162,9 @@ class dinov2Rescaler(nn.Module):
         x = x.view(x.size(0), 1, 32, 32)
         x = self.upconv_1(x)
 
-        out = x
-
-
-        # out = x
-
-        # out12 = x[:, :768, :, :]
-
-
-        
         return x
 
     def encode(self, x):
-        a12 = x
-        b12 = x
-        out_final = self(x)
-
-        a12 = 2 * a12
-
         return self(x)
 
 
