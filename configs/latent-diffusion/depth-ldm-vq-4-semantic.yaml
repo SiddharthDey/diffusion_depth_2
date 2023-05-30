@@ -54,7 +54,7 @@ model:
         lossconfig:
           target: torch.nn.Identity
     cond_stage_config:
-      target: ldm.modules.encoders.modules.SpatialRescaler
+      target: ldm.modules.encoders.modules.dinov2Rescaler
       params:
         n_stages: 2
         in_channels: 3
@@ -86,20 +86,20 @@ model:
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 8
+    batch_size: 1
     wrap: True
     train:
       target: ldm.data.base.ImagePaths
       params:
         size: 256
         # degradation: pil_nearest
-        paths: ["data/NYU_train_text_rgb.txt", "data/NYU_train_text_depth.txt"]
+        paths: ["data/NYU/archive/nyu_data/data/NYU_train_text_rgb.txt", "data/NYU/archive/nyu_data/data/NYU_train_text_depth.txt"]
     validation:
       target: ldm.data.base.ImagePaths
       params:
         size: 256
         # degradation: pil_nearest
-        paths: ["data/NYU_test_text_rgb.txt", "data/NYU_test_text_depth.txt"]
+        paths: ["data/NYU/archive/nyu_data/data/NYU_test_text_rgb.txt", "data/NYU/archive/nyu_data/data/NYU_test_text_depth.txt"]
 
 
 lightning:
