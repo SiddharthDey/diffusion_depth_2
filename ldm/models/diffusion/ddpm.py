@@ -670,7 +670,9 @@ class LatentDiffusion(DDPM):
                 elif cond_key == 'class_label':
                     xc = batch
                 else:
+                    print(f"cond {cond_key}")
                     xc = super().get_input(batch, cond_key).to(self.device)
+                    print(f"xc {xc.shape}")
             else:
                 xc = x
             if not self.cond_stage_trainable or force_c_encode:
@@ -985,6 +987,7 @@ class LatentDiffusion(DDPM):
             x_recon = fold(o) / normalization
 
         else:
+            # print(f"x_noisy {x_noisy.shape}")
             x_recon = self.model(x_noisy, t, **cond)
 
         if isinstance(x_recon, tuple) and not return_ids:
@@ -1405,6 +1408,8 @@ class DiffusionWrapper(pl.LightningModule):
             out = self.diffusion_model(x, t)
         elif self.conditioning_key == 'concat':
             xc = torch.cat([x] + c_concat, dim=1)
+            # print(f"x here  {x.shape}")
+            # print(f"xc {xc.shape}")
             out = self.diffusion_model(xc, t)
         elif self.conditioning_key == 'crossattn':
             cc = torch.cat(c_crossattn, 1)
