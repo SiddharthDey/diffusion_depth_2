@@ -51,9 +51,10 @@ class ImagePaths(Dataset):
         self.rgb_labels = dict() if labels is None else labels
         self.depth_labels = dict() if labels is None else labels
 
-
-        rgb_paths = paths[0]
-        depth_paths = paths[1]
+        self.data_dir = "/root/data/nyu_data/"
+        # self.data_dir = "/root/data/SUNRGBD/data_dump/"
+        rgb_paths = self.data_dir + paths[0]
+        depth_paths = self.data_dir + paths[1]
 
         # rgb_paths = paths
 
@@ -100,6 +101,7 @@ class ImagePaths(Dataset):
         example = dict()
         example["label"] = self.preprocess_image(self.rgb_labels["rgb_file_path_"][i])
         example["image"] = self.preprocess_image(self.depth_labels["depth_file_path_"][i])
+        # print(he)
         for k in self.rgb_labels:
             example[k] = self.rgb_labels[k][i]          
         return example

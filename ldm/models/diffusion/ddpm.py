@@ -460,6 +460,7 @@ class LatentDiffusion(DDPM):
         self.instantiate_first_stage(first_stage_config)
         self.instantiate_cond_stage(cond_stage_config)
         self.cond_stage_forward = cond_stage_forward
+
         self.clip_denoised = False
         self.bbox_tokenizer = None  
 
@@ -654,7 +655,6 @@ class LatentDiffusion(DDPM):
     def get_input(self, batch, k, return_first_stage_outputs=False, force_c_encode=False,
                   cond_key=None, return_original_cond=False, bs=None):
         x = super().get_input(batch, k)
-        # print(f"x shape %%%%%%%%%%%%%%%%%%%%%%% {x.shape}")
         if bs is not None:
             x = x[:bs]
         x = x.to(self.device)
@@ -670,7 +670,9 @@ class LatentDiffusion(DDPM):
                 elif cond_key == 'class_label':
                     xc = batch
                 else:
+                    print(f"cond {cond_key}")
                     xc = super().get_input(batch, cond_key).to(self.device)
+                    print(f"xc {xc.shape}")
             else:
                 xc = x
             if not self.cond_stage_trainable or force_c_encode:
@@ -704,7 +706,7 @@ class LatentDiffusion(DDPM):
         return out
 
     @torch.no_grad()
-    def decode_first_stage(self, z, predict_cids=False, force_not_quantize=False):
+    def decode_first_stage(self, z, predict_cids=False, force_not_quantize=False, return_parts=False):
         if predict_cids:
             if z.dim() == 4:
                 z = torch.argmax(z.exp(), dim=1).long()
@@ -755,13 +757,13 @@ class LatentDiffusion(DDPM):
                 if isinstance(self.first_stage_model, VQModelInterface):
                     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
                 else:
-                    return self.first_stage_model.decode(z)
+                    return self.first_stage_model.decode(z, return_parts=return_parts)
 
         else:
             if isinstance(self.first_stage_model, VQModelInterface):
                 return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
             else:
-                return self.first_stage_model.decode(z)
+                return self.first_stage_model.decode(z, return_parts=return_parts)
 
     # same as above but without decorator
     def differentiable_decode_first_stage(self, z, predict_cids=False, force_not_quantize=False):
@@ -985,6 +987,7 @@ class LatentDiffusion(DDPM):
             x_recon = fold(o) / normalization
 
         else:
+            # print(f"x_noisy {x_noisy.shape}")
             x_recon = self.model(x_noisy, t, **cond)
 
         if isinstance(x_recon, tuple) and not return_ids:
@@ -1028,7 +1031,7 @@ class LatentDiffusion(DDPM):
         loss_simple = self.get_loss(model_output, target, mean=False).mean([1, 2, 3])
         loss_dict.update({f'{prefix}/loss_simple': loss_simple.mean()})
 
-        logvar_t = self.logvar[t].to(self.device)
+        logvar_t = self.logvar[t.cpu()].to(self.device)
         loss = loss_simple / torch.exp(logvar_t) + logvar_t
         # loss = loss_simple / torch.exp(self.logvar) + self.logvar
         if self.learn_logvar:
@@ -1250,7 +1253,7 @@ class LatentDiffusion(DDPM):
 
     @torch.no_grad()
     def log_images(self, batch, N=8, n_row=4, sample=True, ddim_steps=200, ddim_eta=1., return_keys=None,
-                   quantize_denoised=True, inpaint=True, plot_denoise_rows=False, plot_progressive_rows=True,
+                   quantize_denoised=True, inpaint=False, plot_denoise_rows=False, plot_progressive_rows=True,
                    plot_diffusion_rows=True, **kwargs):
 
         use_ddim = ddim_steps is not None
@@ -1261,7 +1264,6 @@ class LatentDiffusion(DDPM):
                                            force_c_encode=True,
                                            return_original_cond=True,
                                            bs=N)
-        # print(f"x.shape ------------------------- {x.shape}")
         N = min(x.shape[0], N)
         n_row = min(x.shape[0], n_row)
         log["inputs"] = x
@@ -1406,6 +1408,8 @@ class DiffusionWrapper(pl.LightningModule):
             out = self.diffusion_model(x, t)
         elif self.conditioning_key == 'concat':
             xc = torch.cat([x] + c_concat, dim=1)
+            # print(f"x here  {x.shape}")
+            # print(f"xc {xc.shape}")
             out = self.diffusion_model(xc, t)
         elif self.conditioning_key == 'crossattn':
             cc = torch.cat(c_crossattn, 1)

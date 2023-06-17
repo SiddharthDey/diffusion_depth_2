@@ -133,6 +133,39 @@ class SpatialRescaler(nn.Module):
 
     def encode(self, x):
         return self(x)
+    
+
+class dinov2Rescaler(nn.Module):
+    def __init__(self,
+                 n_stages=1,
+                 method='bilinear',
+                 multiplier=0.5,
+                 in_channels=3,
+                 out_channels=None,
+                 bias=False):
+        super().__init__()
+        
+        # self.dinov2_model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
+        # dinov2_vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
+
+        # self.interpolator = torch.nn.functional.interpolate(size=(252,252), mode=method)
+        self.interpolator = partial(torch.nn.functional.interpolate, mode=method)
+        self.dinov2_model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
+        self.linear_1 = nn.Linear(384, 1024)
+        self.upconv_1 = nn.ConvTranspose2d(1, 3, kernel_size=4, stride=2, padding=1)
+
+
+    def forward(self,x):
+        x = self.interpolator(x, size = (252,252))
+        x = self.dinov2_model(x)
+        x = self.linear_1(x)
+        x = x.view(x.size(0), 1, 32, 32)
+        x = self.upconv_1(x)
+
+        return x
+
+    def encode(self, x):
+        return self(x)
 
 
 class FrozenCLIPTextEmbedder(nn.Module):
